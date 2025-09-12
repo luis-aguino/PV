@@ -24,7 +24,7 @@
         <!-- Selección de modo y bloque -->
         <div id="selection-container" class="w-full">
             <h2 class="text-xl font-semibold text-white mb-4">Elige el modo de estudio:</h2>
-            <div class="flex flex-col space-y-4 w-full mb-8">
+            <div id="mode-buttons-container" class="flex flex-col space-y-4 w-full mb-8">
                 <button data-mode="quiz" class="mode-button bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Modo Examen</button>
                 <button data-mode="writing" class="mode-button bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Práctica de Escritura</button>
             </div>
@@ -40,6 +40,12 @@
         <!-- Contenedor del Examen de Opción Múltiple -->
         <div id="quiz-container" class="w-full hidden">
             <div id="phrasal-verb-container" class="bg-gray-700 p-6 sm:p-8 rounded-2xl w-full mb-6 relative">
+                <button id="audio-button-quiz" class="absolute top-4 right-4 bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-full transition-colors duration-200" title="Escuchar pronunciación">
+                     <svg id="speaker-icon-quiz" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
+                    </svg>
+                </button>
+                <span id="loading-text-quiz" class="absolute top-4 right-14 text-sm text-gray-400 hidden">Cargando...</span>
                 <p id="spanish-definition-quiz" class="text-xl sm:text-2xl font-semibold text-gray-200 mb-2"></p>
                 <p id="example-sentence-quiz" class="text-lg text-gray-400 italic"></p>
             </div>
@@ -134,6 +140,7 @@
 
         // Elementos del DOM
         const selectionContainer = document.getElementById("selection-container");
+        const modeButtonsContainer = document.getElementById("mode-buttons-container");
         const modeSelection = document.getElementById("mode-selection");
         const quizContainer = document.getElementById("quiz-container");
         const writingContainer = document.getElementById("writing-container");
@@ -145,6 +152,10 @@
         const feedbackQuizEl = document.getElementById("feedback-quiz");
         const scoreTextQuizEl = document.getElementById("score-text-quiz");
         const totalTextQuizEl = document.getElementById("total-text-quiz");
+        const audioButtonQuiz = document.getElementById("audio-button-quiz");
+        const speakerIconQuiz = document.getElementById("speaker-icon-quiz");
+        const loadingTextQuiz = document.getElementById("loading-text-quiz");
+
 
         const spanishDefinitionWritingEl = document.getElementById("spanish-definition-writing");
         const exampleSentenceWritingEl = document.getElementById("example-sentence-writing");
@@ -219,12 +230,12 @@
          * For local development or quick demos, you can paste your key here.
          * Get your key from https://aistudio.google.com/app/apikey
          */
-        const apiKey = "AIzaSyAraqwhluR2MTUEBpqrukkEWti3lKjCx0k"; // <--- PEGA TU CLAVE DE API AQUÍ
+        const apiKey = "AIzaSyDUcIYFkrk6nvZPXkNUYCeIu2w-9mmWRoc"; // <--- PEGA TU CLAVE DE API AQUÍ
 
         async function playPronunciation(text) {
-            const audioBtn = (currentMode === 'quiz') ? document.getElementById("audio-button-quiz") : document.getElementById("audio-button-writing");
-            const icon = (currentMode === 'quiz') ? document.getElementById("speaker-icon-quiz") : document.getElementById("speaker-icon");
-            const loadText = (currentMode === 'quiz') ? document.getElementById("loading-text-quiz") : document.getElementById("loading-text");
+            const audioBtn = (currentMode === 'quiz') ? audioButtonQuiz : audioButtonWriting;
+            const icon = (currentMode === 'quiz') ? speakerIconQuiz : speakerIcon;
+            const loadText = (currentMode === 'quiz') ? loadingTextQuiz : loadingText;
 
             audioBtn.disabled = true;
             if(icon) icon.classList.add("hidden");
@@ -313,6 +324,7 @@
         function showSelectionMode() {
             currentMode = 'selection';
             selectionContainer.classList.remove("hidden");
+            modeButtonsContainer.classList.remove("hidden");
             modeSelection.classList.add("hidden");
             quizContainer.classList.add("hidden");
             writingContainer.classList.add("hidden");
@@ -321,6 +333,7 @@
 
         function showQuizSetSelection() {
             currentMode = 'quiz_selection';
+            modeButtonsContainer.classList.add("hidden");
             selectionContainer.classList.remove("hidden");
             modeSelection.classList.remove("hidden");
             quizContainer.classList.add("hidden");
@@ -330,6 +343,7 @@
 
         function showWritingSetSelection() {
             currentMode = 'writing_selection';
+            modeButtonsContainer.classList.add("hidden");
             selectionContainer.classList.remove("hidden");
             modeSelection.classList.remove("hidden");
             quizContainer.classList.add("hidden");
@@ -571,11 +585,14 @@
                 playPronunciation(shuffledVerbs[currentIndex].english);
             }
         });
+        audioButtonQuiz.addEventListener("click", () => {
+            if (shuffledVerbs[currentIndex]) {
+                playPronunciation(shuffledVerbs[currentIndex].english);
+            }
+        });
 
         // Start with the initial selection view
         showSelectionMode();
     </script>
 </body>
 </html>
-
-
