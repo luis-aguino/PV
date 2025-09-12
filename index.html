@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprende Phrasal Verbs</title>
+    <!-- Incluye Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="bg-gray-800 p-6 sm:p-8 lg:p-10 rounded-3xl shadow-2xl max-w-lg w-full flex flex-col items-center text-center">
+        <h1 class="text-3xl sm:text-4xl font-bold text-white mb-4">Aprende Phrasal Verbs</h1>
+        <p class="text-gray-300 mb-8 max-w-xs sm:max-w-none">Memoriza los phrasal verbs más comunes usados en diferentes regiones.</p>
+
+        <!-- Selección de modo y bloque -->
+        <div id="selection-container" class="w-full">
+            <h2 class="text-xl font-semibold text-white mb-4">Elige el modo de estudio:</h2>
+            <div class="flex flex-col space-y-4 w-full mb-8">
+                <button data-mode="quiz" class="mode-button bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Modo Examen</button>
+                <button data-mode="writing" class="mode-button bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Práctica de Escritura</button>
+            </div>
+            
+            <div id="mode-selection" class="flex flex-col space-y-4 w-full hidden">
+                <h2 class="text-xl font-semibold text-white">Elige el bloque de phrasal verbs:</h2>
+                <button data-set="us" class="set-button bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Estados Unidos y Canadá</button>
+                <button data-set="uk" class="set-button bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Reino Unido</button>
+                <button data-set="all" class="set-button bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Ambos</button>
+            </div>
+        </div>
+
+        <!-- Contenedor del Examen de Opción Múltiple -->
+        <div id="quiz-container" class="w-full hidden">
+            <div id="phrasal-verb-container" class="bg-gray-700 p-6 sm:p-8 rounded-2xl w-full mb-6 relative">
+                <p id="spanish-definition-quiz" class="text-xl sm:text-2xl font-semibold text-gray-200 mb-2"></p>
+                <p id="example-sentence-quiz" class="text-lg text-gray-400 italic"></p>
+            </div>
+
+            <div id="choices-container" class="flex flex-col space-y-4 w-full"></div>
+            
+            <p id="feedback-quiz" class="h-6 text-sm font-medium mt-4 mb-4 transition-opacity duration-300"></p>
+
+            <div class="mt-8 text-lg font-bold text-white">
+                <span id="score-text-quiz">Puntuación: 0</span> / <span id="total-text-quiz">0</span>
+            </div>
+        </div>
+
+        <!-- Contenedor de Práctica de Escritura -->
+        <div id="writing-container" class="w-full hidden">
+            <div class="bg-gray-700 p-6 sm:p-8 rounded-2xl w-full mb-6">
+                <p id="spanish-definition-writing" class="text-xl sm:text-2xl font-semibold text-gray-200 mb-4"></p>
+                <p id="example-sentence-writing" class="text-lg text-gray-400 italic mb-4"></p>
+                <input type="text" id="answer-input" placeholder="Escribe el phrasal verb aquí..." class="w-full bg-gray-600 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400">
+            </div>
+
+            <button id="check-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Comprobar</button>
+
+            <div id="writing-feedback-container" class="mt-4 w-full">
+                <p id="feedback-writing" class="h-6 text-sm font-medium transition-opacity duration-300"></p>
+                <div id="answer-reveal-container" class="bg-gray-700 p-4 rounded-xl mt-4 hidden">
+                    <p class="text-lg font-semibold text-gray-200">Respuesta correcta: <span id="correct-answer-text" class="font-bold text-blue-400"></span></p>
+                    <button id="audio-button-writing" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-full mt-2 transition-colors duration-200" title="Escuchar pronunciación">
+                         <svg id="speaker-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
+                        </svg>
+                    </button>
+                    <span id="loading-text" class="text-sm text-gray-400 hidden">Cargando...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de navegación (compartidos) -->
+        <div id="nav-buttons-container" class="w-full flex justify-between space-x-4 mt-6 hidden">
+            <button id="back-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex-1 disabled:opacity-50 disabled:cursor-not-allowed">Atrás</button>
+            <button id="next-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex-1">Siguiente</button>
+            <button id="home-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex-1">Inicio</button>
+        </div>
+    </div>
+
+    <script>
+        // Array de phrasal verbs de Estados Unidos y Canadá
+        const usPhrasalVerbs = [
+            { english: "break down", spanish: "averiarse, descomponerse", example: "Mi coche se averió en el camino a casa." },
+            { english: "look for", spanish: "buscar", example: "Estoy buscando mis llaves." },
+            { english: "get up", spanish: "levantarse", example: "Me levanto a las 7 a.m. todos los días." },
+            { english: "take off", spanish: "despegar (avión), quitarse (ropa)", example: "El avión despegará en 10 minutos." },
+            { english: "put on", spanish: "ponerse (ropa)", example: "Me pondré un abrigo porque hace frío." },
+            { english: "turn off", spanish: "apagar", example: "Recuerda apagar las luces antes de salir." },
+            { english: "turn on", spanish: "encender", example: "Enciende la televisión, por favor." },
+            { english: "go on", spanish: "continuar", example: "Puedes continuar con tu historia." },
+            { english: "call off", spanish: "cancelar", example: "Tuvieron que cancelar el partido por la lluvia." },
+            { english: "give up", spanish: "rendirse", example: "Nunca te rindas en tus sueños." },
+            { english: "put off", spanish: "posponer", example: "No pospongas para mañana lo que puedes hacer hoy." },
+            { english: "look after", spanish: "cuidar de", example: "Mi hermana cuidó de mi perro mientras estaba de vacaciones." },
+            { english: "come across", spanish: "encontrarse con", example: "Me encontré con un viejo amigo en el supermercado." },
+            { english: "run out of", spanish: "quedarse sin", example: "Nos hemos quedado sin leche." },
+            { english: "take up", spanish: "empezar un hobby", example: "He empezado a tocar el piano." },
+            { english: "grow up", spanish: "crecer", example: "Él creció en la ciudad de Nueva York." },
+            { english: "hang out", spanish: "pasar el rato", example: "Nos gusta pasar el rato en la cafetería." },
+            { english: "get along with", spanish: "llevarse bien con", example: "Me llevo bien con mi vecino." },
+            { english: "look forward to", spanish: "estar deseando", example: "Estoy deseando verte la próxima semana." },
+            { english: "put up with", spanish: "tolerar, aguantar", example: "No puedo aguantar su mala actitud." }
+        ];
+
+        // Nuevo array de phrasal verbs del Reino Unido
+        const ukPhrasalVerbs = [
+            { english: "get off", spanish: "bajarse (de un bus, tren)", example: "Me bajé del autobús en la siguiente parada." },
+            { english: "cheer on", spanish: "animar a", example: "Estuvimos animando a nuestro equipo favorito." },
+            { english: "hold on", spanish: "esperar (en el teléfono)", example: "Espera un momento, por favor." },
+            { english: "pop in", spanish: "pasar de visita", example: "Mi tía pasó de visita para tomar un té." },
+            { english: "send off", spanish: "expulsar (del campo de juego)", example: "El árbitro lo expulsó por una falta." },
+            { english: "go off", spanish: "sonar (una alarma)", example: "La alarma sonó a las 6 de la mañana." },
+            { english: "bring up", spanish: "educar, criar", example: "Fui criado por mis abuelos." },
+            { english: "look into", spanish: "investigar", example: "La policía está investigando el caso." },
+            { english: "fall out", spanish: "discutir con", example: "Ellos discutieron por un desacuerdo simple." },
+            { english: "get round to", spanish: "encontrar tiempo para", example: "Finalmente encontré tiempo para reparar la bicicleta." },
+        ];
+
+        let selectedVerbs = [];
+        let shuffledVerbs = [];
+        let currentIndex = 0;
+        let score = 0;
+        let totalAttempts = 0;
+        let currentMode = 'selection';
+        let choiceMade = false;
+
+        // Elementos del DOM
+        const selectionContainer = document.getElementById("selection-container");
+        const modeSelection = document.getElementById("mode-selection");
+        const quizContainer = document.getElementById("quiz-container");
+        const writingContainer = document.getElementById("writing-container");
+        const navButtonsContainer = document.getElementById("nav-buttons-container");
+
+        const spanishDefinitionQuizEl = document.getElementById("spanish-definition-quiz");
+        const exampleSentenceQuizEl = document.getElementById("example-sentence-quiz");
+        const choicesContainer = document.getElementById("choices-container");
+        const feedbackQuizEl = document.getElementById("feedback-quiz");
+        const scoreTextQuizEl = document.getElementById("score-text-quiz");
+        const totalTextQuizEl = document.getElementById("total-text-quiz");
+
+        const spanishDefinitionWritingEl = document.getElementById("spanish-definition-writing");
+        const exampleSentenceWritingEl = document.getElementById("example-sentence-writing");
+        const answerInput = document.getElementById("answer-input");
+        const checkButton = document.getElementById("check-button");
+        const feedbackWritingEl = document.getElementById("feedback-writing");
+        const answerRevealContainer = document.getElementById("answer-reveal-container");
+        const correctAnswerText = document.getElementById("correct-answer-text");
+        const audioButtonWriting = document.getElementById("audio-button-writing");
+        const speakerIcon = document.getElementById("speaker-icon");
+        const loadingText = document.getElementById("loading-text");
+
+        const modeButtons = document.querySelectorAll(".mode-button");
+        const setButtons = document.querySelectorAll(".set-button");
+        const backButton = document.getElementById("back-button");
+        const nextButton = document.getElementById("next-button");
+        const homeButton = document.getElementById("home-button");
+
+        // Helper functions for TTS API
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function pcmToWav(pcmData, sampleRate) {
+            const numChannels = 1;
+            const bitsPerSample = 16;
+            const blockAlign = numChannels * (bitsPerSample / 8);
+            const byteRate = sampleRate * blockAlign;
+
+            const buffer = new ArrayBuffer(44 + pcmData.length * 2);
+            const view = new DataView(buffer);
+            let offset = 0;
+
+            function writeString(str) {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
+                offset += str.length;
+            }
+
+            writeString('RIFF');
+            view.setUint32(offset, 36 + pcmData.length * 2, true); offset += 4;
+            writeString('WAVE');
+            writeString('fmt ');
+            view.setUint32(offset, 16, true); offset += 4; // Subchunk1Size
+            view.setUint16(offset, 1, true); offset += 2; // AudioFormat
+            view.setUint16(offset, numChannels, true); offset += 2; // NumChannels
+            view.setUint32(offset, sampleRate, true); offset += 4; // SampleRate
+            view.setUint32(offset, byteRate, true); offset += 4; // ByteRate
+            view.setUint16(offset, blockAlign, true); offset += 2; // BlockAlign
+            view.setUint16(offset, bitsPerSample, true); offset += 2; // BitsPerSample
+            writeString('data');
+            view.setUint32(offset, pcmData.length * 2, true); offset += 4;
+
+            for (let i = 0; i < pcmData.length; i++) {
+                view.setInt16(offset, pcmData[i], true);
+                offset += 2;
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        async function playPronunciation(text) {
+            const audioBtn = (currentMode === 'quiz') ? document.getElementById("audio-button-quiz") : document.getElementById("audio-button-writing");
+            const icon = (currentMode === 'quiz') ? document.getElementById("speaker-icon-quiz") : document.getElementById("speaker-icon");
+            const loadText = (currentMode === 'quiz') ? document.getElementById("loading-text-quiz") : document.getElementById("loading-text");
+
+            audioBtn.disabled = true;
+            if(icon) icon.classList.add("hidden");
+            if(loadText) {
+                loadText.classList.remove("hidden");
+                loadText.textContent = "Cargando...";
+            }
+
+            try {
+                const payload = {
+                    contents: [{
+                        parts: [{ text: text }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Algenib" }
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                
+                let response;
+                let retries = 0;
+                while (retries < 3) {
+                    try {
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (response.status !== 429) break;
+                        await new Promise(res => setTimeout(res, Math.pow(2, retries) * 1000));
+                        retries++;
+                    } catch (err) {
+                        break;
+                    }
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                    audio.onended = () => URL.revokeObjectURL(audioUrl);
+                } else {
+                    throw new Error("Invalid audio data from API.");
+                }
+
+            } catch (error) {
+                console.error("Error al generar o reproducir el audio:", error);
+                if(loadText) loadText.textContent = "Error";
+            } finally {
+                if(icon) icon.classList.remove("hidden");
+                if(loadText) loadText.classList.add("hidden");
+                audioBtn.disabled = false;
+            }
+        }
+
+        // Función para mezclar el array (algoritmo Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function showSelectionMode() {
+            currentMode = 'selection';
+            selectionContainer.classList.remove("hidden");
+            modeSelection.classList.add("hidden");
+            quizContainer.classList.add("hidden");
+            writingContainer.classList.add("hidden");
+            navButtonsContainer.classList.add("hidden");
+        }
+
+        function showQuizSetSelection() {
+            currentMode = 'quiz_selection';
+            selectionContainer.classList.remove("hidden");
+            modeSelection.classList.remove("hidden");
+            quizContainer.classList.add("hidden");
+            writingContainer.classList.add("hidden");
+            navButtonsContainer.classList.add("hidden");
+        }
+
+        function showWritingSetSelection() {
+            currentMode = 'writing_selection';
+            selectionContainer.classList.remove("hidden");
+            modeSelection.classList.remove("hidden");
+            quizContainer.classList.add("hidden");
+            writingContainer.classList.add("hidden");
+            navButtonsContainer.classList.add("hidden");
+        }
+
+        // --- Lógica del Modo Examen ---
+        function startQuiz() {
+            currentMode = 'quiz';
+            selectionContainer.classList.add("hidden");
+            quizContainer.classList.remove("hidden");
+            navButtonsContainer.classList.remove("hidden");
+            shuffledVerbs = shuffleArray([...selectedVerbs]);
+            currentIndex = 0;
+            score = 0;
+            totalAttempts = 0;
+            updateQuizScore();
+            showQuizCard();
+        }
+
+        function showQuizCard() {
+            if (currentIndex < 0) {
+                currentIndex = 0;
+                return;
+            }
+            if (currentIndex >= shuffledVerbs.length) {
+                showModal(`¡Has completado todas las tarjetas! Puntuación final: ${score} de ${totalAttempts}. Reiniciando...`, startQuiz);
+                return;
+            }
+
+            const currentVerb = shuffledVerbs[currentIndex];
+            spanishDefinitionQuizEl.textContent = currentVerb.spanish;
+            exampleSentenceQuizEl.textContent = currentVerb.example;
+            feedbackQuizEl.textContent = "";
+            choiceMade = false;
+            updateNavButtons();
+            generateChoices(currentVerb.english);
+        }
+
+        function generateChoices(correctAnswer) {
+            choicesContainer.innerHTML = "";
+            const incorrectOptions = selectedVerbs
+                .filter(verb => verb.english !== correctAnswer)
+                .map(verb => verb.english);
+            
+            const randomIncorrect = shuffleArray(incorrectOptions).slice(0, 3);
+            const options = shuffleArray([...randomIncorrect, correctAnswer]);
+
+            options.forEach(option => {
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.classList.add("bg-gray-700", "hover:bg-gray-600", "text-white", "font-bold", "py-3", "px-6", "rounded-xl", "shadow-lg", "transition-colors", "duration-200", "w-full");
+                button.addEventListener("click", () => checkQuizAnswer(option, correctAnswer, button));
+                choicesContainer.appendChild(button);
+            });
+        }
+
+        function checkQuizAnswer(selectedOption, correctAnswer, button) {
+            if (choiceMade) return;
+            choiceMade = true;
+            totalAttempts++;
+
+            Array.from(choicesContainer.children).forEach(btn => btn.disabled = true);
+
+            if (selectedOption === correctAnswer) {
+                score++;
+                feedbackQuizEl.textContent = "¡Correcto!";
+                feedbackQuizEl.classList.remove("text-red-400");
+                feedbackQuizEl.classList.add("text-green-400");
+                button.classList.remove("bg-gray-700", "hover:bg-gray-600");
+                button.classList.add("bg-green-600", "text-white");
+            } else {
+                feedbackQuizEl.textContent = `Incorrecto. La respuesta correcta es "${correctAnswer}".`;
+                feedbackQuizEl.classList.remove("text-green-400");
+                feedbackQuizEl.classList.add("text-red-400");
+                button.classList.remove("bg-gray-700", "hover:bg-gray-600");
+                button.classList.add("bg-red-600", "text-white");
+
+                const correctButton = Array.from(choicesContainer.children).find(btn => btn.textContent === correctAnswer);
+                if (correctButton) {
+                    correctButton.classList.remove("bg-gray-700", "hover:bg-gray-600");
+                    correctButton.classList.add("bg-green-600", "text-white");
+                }
+            }
+
+            updateQuizScore();
+        }
+
+        function updateQuizScore() {
+            scoreTextQuizEl.textContent = "Puntuación: " + score;
+            totalTextQuizEl.textContent = totalAttempts;
+        }
+
+        // --- Lógica del Modo Escritura ---
+        function startWritingPractice() {
+            currentMode = 'writing';
+            selectionContainer.classList.add("hidden");
+            writingContainer.classList.remove("hidden");
+            navButtonsContainer.classList.remove("hidden");
+            shuffledVerbs = shuffleArray([...selectedVerbs]);
+            currentIndex = 0;
+            showWritingCard();
+        }
+
+        function showWritingCard() {
+            if (currentIndex < 0) {
+                currentIndex = 0;
+                return;
+            }
+            if (currentIndex >= shuffledVerbs.length) {
+                showModal("¡Has completado todas las tarjetas! Reiniciando...", startWritingPractice);
+                return;
+            }
+
+            const currentVerb = shuffledVerbs[currentIndex];
+            spanishDefinitionWritingEl.textContent = currentVerb.spanish;
+            exampleSentenceWritingEl.textContent = currentVerb.example;
+            
+            answerInput.value = "";
+            answerInput.disabled = false;
+            checkButton.classList.remove("hidden");
+            answerRevealContainer.classList.add("hidden");
+            feedbackWritingEl.textContent = "";
+            updateNavButtons();
+        }
+
+        function checkWritingAnswer() {
+            const currentVerb = shuffledVerbs[currentIndex];
+            const userAnswer = answerInput.value.trim().toLowerCase();
+            const correctAnswer = currentVerb.english.toLowerCase();
+
+            answerInput.disabled = true;
+            checkButton.classList.add("hidden");
+            answerRevealContainer.classList.remove("hidden");
+            correctAnswerText.textContent = currentVerb.english;
+
+            if (userAnswer === correctAnswer) {
+                feedbackWritingEl.textContent = "¡Correcto!";
+                feedbackWritingEl.classList.remove("text-red-400");
+                feedbackWritingEl.classList.add("text-green-400");
+            } else {
+                feedbackWritingEl.textContent = "Incorrecto.";
+                feedbackWritingEl.classList.remove("text-green-400");
+                feedbackWritingEl.classList.add("text-red-400");
+            }
+        }
+
+        // --- Lógica general ---
+        function updateNavButtons() {
+            if (currentIndex === 0) {
+                backButton.disabled = true;
+                backButton.classList.add("opacity-50", "cursor-not-allowed");
+            } else {
+                backButton.disabled = false;
+                backButton.classList.remove("opacity-50", "cursor-not-allowed");
+            }
+
+            if (currentIndex === shuffledVerbs.length - 1) {
+                nextButton.textContent = "Finalizar";
+            } else {
+                nextButton.textContent = "Siguiente";
+            }
+        }
+
+        function showModal(message, onRestart) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center';
+            modal.innerHTML = `
+                <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center">
+                    <p class="text-xl font-bold mb-4 text-white">${message}</p>
+                    <button id="close-modal" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl">Cerrar</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('close-modal').addEventListener('click', () => {
+                document.body.removeChild(modal);
+                if (onRestart) onRestart();
+            });
+        }
+
+        // Event Listeners
+        modeButtons.forEach(button => {
+            button.addEventListener("click", () => {
+                const mode = button.dataset.mode;
+                if (mode === 'quiz') {
+                    showQuizSetSelection();
+                } else if (mode === 'writing') {
+                    showWritingSetSelection();
+                }
+            });
+        });
+
+        setButtons.forEach(button => {
+            button.addEventListener("click", () => {
+                const dataset = button.dataset.set;
+                if (dataset === "us") {
+                    selectedVerbs = [...usPhrasalVerbs];
+                } else if (dataset === "uk") {
+                    selectedVerbs = [...ukPhrasalVerbs];
+                } else if (dataset === "all") {
+                    selectedVerbs = [...usPhrasalVerbs, ...ukPhrasalVerbs];
+                }
+
+                if (currentMode === 'quiz_selection') {
+                    startQuiz();
+                } else if (currentMode === 'writing_selection') {
+                    startWritingPractice();
+                }
+            });
+        });
+        
+        // Navigation Buttons
+        backButton.addEventListener("click", () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                if (currentMode === 'quiz') {
+                    showQuizCard();
+                } else if (currentMode === 'writing') {
+                    showWritingCard();
+                }
+            }
+        });
+        nextButton.addEventListener("click", () => {
+            currentIndex++;
+            if (currentMode === 'quiz') {
+                showQuizCard();
+            } else if (currentMode === 'writing') {
+                showWritingCard();
+            }
+        });
+        homeButton.addEventListener("click", showSelectionMode);
+
+        // Writing Mode
+        checkButton.addEventListener("click", checkWritingAnswer);
+        audioButtonWriting.addEventListener("click", () => {
+            if (shuffledVerbs[currentIndex]) {
+                playPronunciation(shuffledVerbs[currentIndex].english);
+            }
+        });
+
+        // Start with the initial selection view
+        showSelectionMode();
+    </script>
+</body>
+</html>
