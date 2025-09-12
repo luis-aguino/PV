@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -52,7 +54,11 @@
 
             <div id="choices-container" class="flex flex-col space-y-4 w-full"></div>
             
-            <p id="feedback-quiz" class="h-6 text-sm font-medium mt-4 mb-4 transition-opacity duration-300"></p>
+            <p id="feedback-quiz" class="h-6 text-sm font-medium mt-4 mb-2 transition-opacity duration-300"></p>
+            <div id="motivation-container-quiz" class="cursor-pointer">
+                <p id="motivation-quiz-es" class="h-6 text-sm text-gray-400 italic transition-opacity duration-300"></p>
+                <p id="motivation-quiz-en" class="h-6 text-sm text-gray-400 italic transition-opacity duration-300 hidden"></p>
+            </div>
 
             <div class="mt-8 text-lg font-bold text-white">
                 <span id="score-text-quiz">Puntuación: 0</span> / <span id="total-text-quiz">0</span>
@@ -70,7 +76,11 @@
             <button id="check-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Comprobar</button>
 
             <div id="writing-feedback-container" class="mt-4 w-full">
-                <p id="feedback-writing" class="h-6 text-sm font-medium transition-opacity duration-300"></p>
+                <p id="feedback-writing" class="h-6 text-sm font-medium transition-opacity duration-300 mb-2"></p>
+                <div id="motivation-container-writing" class="cursor-pointer">
+                    <p id="motivation-writing-es" class="h-6 text-sm text-gray-400 italic transition-opacity duration-300"></p>
+                    <p id="motivation-writing-en" class="h-6 text-sm text-gray-400 italic transition-opacity duration-300 hidden"></p>
+                </div>
                 <div id="answer-reveal-container" class="bg-gray-700 p-4 rounded-xl mt-4 hidden">
                     <p class="text-lg font-semibold text-gray-200">Respuesta correcta: <span id="correct-answer-text" class="font-bold text-blue-400"></span></p>
                     <button id="audio-button-writing" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-full mt-2 transition-colors duration-200" title="Escuchar pronunciación">
@@ -130,6 +140,33 @@
             { english: "get round to", spanish: "encontrar tiempo para", example: "Finalmente encontré tiempo para reparar la bicicleta." },
         ];
 
+        // Mensajes de motivación
+        const motivationalMessages = [
+            "¡Sigue así, estás progresando!",
+            "Cada respuesta es un paso más hacia la fluidez.",
+            "La práctica hace al maestro. ¡Muy bien!",
+            "El esfuerzo de hoy es el éxito de mañana.",
+            "¡No te rindas! Cada error es una oportunidad para aprender.",
+            "El camino al dominio es largo, pero valdrá la pena.",
+            "Estás construyendo tu vocabulario de manera excelente.",
+            "Recuerda que cada pequeño paso cuenta.",
+            "¡Tú puedes! El aprendizaje es un proceso continuo.",
+            "La constancia es la clave. ¡Buen trabajo!",
+        ];
+
+        const englishMotivationalMessages = [
+            "Keep it up, you're making progress!",
+            "Every answer is one step closer to fluency.",
+            "Practice makes perfect. Well done!",
+            "Today's effort is tomorrow's success.",
+            "Don't give up! Every mistake is a chance to learn.",
+            "The path to mastery is long, but it will be worth it.",
+            "You are building your vocabulary excellently.",
+            "Remember that every small step counts.",
+            "You can do it! Learning is a continuous process.",
+            "Consistency is key. Great job!",
+        ];
+
         let selectedVerbs = [];
         let shuffledVerbs = [];
         let currentIndex = 0;
@@ -137,6 +174,7 @@
         let totalAttempts = 0;
         let currentMode = 'selection';
         let choiceMade = false;
+        let lastMotivationIndex = -1;
 
         // Elementos del DOM
         const selectionContainer = document.getElementById("selection-container");
@@ -150,6 +188,9 @@
         const exampleSentenceQuizEl = document.getElementById("example-sentence-quiz");
         const choicesContainer = document.getElementById("choices-container");
         const feedbackQuizEl = document.getElementById("feedback-quiz");
+        const motivationContainerQuiz = document.getElementById("motivation-container-quiz");
+        const motivationQuizEs = document.getElementById("motivation-quiz-es");
+        const motivationQuizEn = document.getElementById("motivation-quiz-en");
         const scoreTextQuizEl = document.getElementById("score-text-quiz");
         const totalTextQuizEl = document.getElementById("total-text-quiz");
         const audioButtonQuiz = document.getElementById("audio-button-quiz");
@@ -162,6 +203,9 @@
         const answerInput = document.getElementById("answer-input");
         const checkButton = document.getElementById("check-button");
         const feedbackWritingEl = document.getElementById("feedback-writing");
+        const motivationContainerWriting = document.getElementById("motivation-container-writing");
+        const motivationWritingEs = document.getElementById("motivation-writing-es");
+        const motivationWritingEn = document.getElementById("motivation-writing-en");
         const answerRevealContainer = document.getElementById("answer-reveal-container");
         const correctAnswerText = document.getElementById("correct-answer-text");
         const audioButtonWriting = document.getElementById("audio-button-writing");
@@ -321,6 +365,15 @@
             return array;
         }
 
+        function getRandomMotivation() {
+            const index = Math.floor(Math.random() * motivationalMessages.length);
+            lastMotivationIndex = index;
+            return {
+                spanish: motivationalMessages[index],
+                english: englishMotivationalMessages[index]
+            };
+        }
+
         function showSelectionMode() {
             currentMode = 'selection';
             selectionContainer.classList.remove("hidden");
@@ -379,6 +432,9 @@
             spanishDefinitionQuizEl.textContent = currentVerb.spanish;
             exampleSentenceQuizEl.textContent = currentVerb.example;
             feedbackQuizEl.textContent = "";
+            motivationQuizEs.textContent = "";
+            motivationQuizEn.textContent = "";
+            motivationQuizEn.classList.add("hidden");
             choiceMade = false;
             updateNavButtons();
             generateChoices(currentVerb.english);
@@ -429,7 +485,10 @@
                     correctButton.classList.add("bg-green-600", "text-white");
                 }
             }
-
+            
+            const motivation = getRandomMotivation();
+            motivationQuizEs.textContent = motivation.spanish;
+            motivationQuizEn.textContent = motivation.english;
             updateQuizScore();
         }
 
@@ -468,6 +527,9 @@
             checkButton.classList.remove("hidden");
             answerRevealContainer.classList.add("hidden");
             feedbackWritingEl.textContent = "";
+            motivationWritingEs.textContent = "";
+            motivationWritingEn.textContent = "";
+            motivationWritingEn.classList.add("hidden");
             updateNavButtons();
         }
 
@@ -490,6 +552,10 @@
                 feedbackWritingEl.classList.remove("text-green-400");
                 feedbackWritingEl.classList.add("text-red-400");
             }
+
+            const motivation = getRandomMotivation();
+            motivationWritingEs.textContent = motivation.spanish;
+            motivationWritingEn.textContent = motivation.english;
         }
 
         // --- Lógica general ---
@@ -591,8 +657,48 @@
             }
         });
 
+        motivationContainerQuiz.addEventListener('click', () => {
+            if (motivationQuizEn.textContent) {
+                playPronunciation(motivationQuizEn.textContent);
+                motivationQuizEn.classList.toggle("hidden");
+                motivationQuizEs.classList.toggle("hidden");
+            }
+        });
+        motivationContainerWriting.addEventListener('click', () => {
+            if (motivationWritingEn.textContent) {
+                playPronunciation(motivationWritingEn.textContent);
+                motivationWritingEn.classList.toggle("hidden");
+                motivationWritingEs.classList.toggle("hidden");
+            }
+        });
+
         // Start with the initial selection view
         showSelectionMode();
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
