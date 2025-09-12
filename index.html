@@ -213,6 +213,14 @@
             return new Blob([view], { type: 'audio/wav' });
         }
 
+        /**
+         * The following API key is for demonstration purposes. In a public-facing application,
+         * you should use a backend server or a serverless function to securely handle your API key.
+         * For local development or quick demos, you can paste your key here.
+         * Get your key from https://aistudio.google.com/app/apikey
+         */
+        const apiKey = ""; // <--- PEGA TU CLAVE DE API AQUÍ
+
         async function playPronunciation(text) {
             const audioBtn = (currentMode === 'quiz') ? document.getElementById("audio-button-quiz") : document.getElementById("audio-button-writing");
             const icon = (currentMode === 'quiz') ? document.getElementById("speaker-icon-quiz") : document.getElementById("speaker-icon");
@@ -241,7 +249,6 @@
                     model: "gemini-2.5-flash-preview-tts"
                 };
 
-                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
                 
                 let response;
