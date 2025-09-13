@@ -62,8 +62,8 @@
                     <svg id="speaker-icon-quiz" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
                     </svg>
+                    <div id="loading-spinner-quiz" class="loading-spinner absolute top-1/2 left-1/2 -mt-3 -ml-3 hidden"></div>
                 </button>
-                <span id="loading-text-quiz" class="absolute top-4 right-14 text-sm text-gray-400 hidden">Cargando...</span>
                 <p id="spanish-definition-quiz" class="text-xl sm:text-2xl font-semibold text-gray-200 mb-2"></p>
                 <p id="example-sentence-quiz" class="text-lg text-gray-400 italic cursor-pointer"></p>
                 <p id="gemini-loading-quiz" class="text-lg text-gray-400 italic hidden">Generando nuevo ejemplo...</p>
@@ -90,10 +90,16 @@
 
         <!-- Contenedor de Práctica de Escritura -->
         <div id="writing-container" class="w-full hidden">
-            <div class="bg-gray-700 p-6 sm:p-8 rounded-2xl w-full mb-6">
+            <div class="bg-gray-700 p-6 sm:p-8 rounded-2xl w-full mb-6 relative">
                 <p id="spanish-definition-writing" class="text-xl sm:text-2xl font-semibold text-gray-200 mb-4"></p>
                 <p id="example-sentence-writing" class="text-lg text-gray-400 italic cursor-pointer"></p>
                 <input type="text" id="answer-input" placeholder="Escribe el phrasal verb aquí..." class="w-full bg-gray-600 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400">
+                <button id="audio-button-writing" class="absolute top-4 right-4 bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-full transition-colors duration-200" title="Escuchar pronunciación">
+                    <svg id="speaker-icon-writing" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
+                    </svg>
+                    <div id="loading-spinner-writing" class="loading-spinner absolute top-1/2 left-1/2 -mt-3 -ml-3 hidden"></div>
+                </button>
             </div>
 
             <div id="gemini-feedback-container-writing" class="bg-gray-700 p-4 rounded-xl mt-4 hidden">
@@ -116,12 +122,6 @@
                 </div>
                 <div id="answer-reveal-container" class="bg-gray-700 p-4 rounded-xl mt-4 hidden">
                     <p class="text-lg font-semibold text-gray-200">Respuesta correcta: <span id="correct-answer-text" class="font-bold text-blue-400"></span></p>
-                    <button id="audio-button-writing" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-full mt-2 transition-colors duration-200" title="Escuchar pronunciación">
-                        <svg id="speaker-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
-                        </svg>
-                    </button>
-                    <span id="loading-text" class="text-sm text-gray-400 hidden">Cargando...</span>
                 </div>
             </div>
         </div>
@@ -219,7 +219,9 @@
         let lastMotivationIndex = -1;
         // Objeto para almacenar el ejemplo dinámico generado por la IA y su traducción
         let currentDynamicExample = null;
-
+        
+        // Cache para el audio
+        const audioCache = {};
 
         // Elementos del DOM
         const selectionContainer = document.getElementById("selection-container");
@@ -244,7 +246,7 @@
         const totalTextQuizEl = document.getElementById("total-text-quiz");
         const audioButtonQuiz = document.getElementById("audio-button-quiz");
         const speakerIconQuiz = document.getElementById("speaker-icon-quiz");
-        const loadingTextQuiz = document.getElementById("loading-text-quiz");
+        const loadingSpinnerQuiz = document.getElementById("loading-spinner-quiz");
         const geminiNewExampleButtonQuiz = document.getElementById("gemini-new-example-button-quiz");
         const geminiButtonTextQuiz = document.getElementById("gemini-button-text-quiz");
         const geminiSpinnerQuiz = document.getElementById("gemini-spinner-quiz");
@@ -262,8 +264,8 @@
         const answerRevealContainer = document.getElementById("answer-reveal-container");
         const correctAnswerText = document.getElementById("correct-answer-text");
         const audioButtonWriting = document.getElementById("audio-button-writing");
-        const speakerIcon = document.getElementById("speaker-icon");
-        const loadingText = document.getElementById("loading-text");
+        const speakerIconWriting = document.getElementById("speaker-icon-writing");
+        const loadingSpinnerWriting = document.getElementById("loading-spinner-writing");
         const geminiCheckButtonWriting = document.getElementById("gemini-check-button-writing");
         const geminiCheckButtonText = document.getElementById("gemini-check-button-text");
         const geminiCheckSpinner = document.getElementById("gemini-check-spinner");
@@ -360,19 +362,11 @@
             }
         };
 
-        async function playPronunciation(text) {
-            const audioBtn = (currentMode === 'quiz') ? audioButtonQuiz : audioButtonWriting;
-            const icon = (currentMode === 'quiz') ? speakerIconQuiz : speakerIcon;
-            const loadText = (currentMode === 'quiz') ? loadingTextQuiz : loadingText;
-
-            // Evita que se activen varios audios a la vez
-            if (audioBtn) audioBtn.disabled = true;
-            if(icon) icon.classList.add("hidden");
-            if(loadText) {
-                loadText.classList.remove("hidden");
-                loadText.textContent = "Cargando...";
+        // Nueva función para generar y cachear audio
+        async function fetchAndCacheAudio(text, lang = "en-US") {
+            if (audioCache[text]) {
+                return; // Ya está en caché
             }
-
             try {
                 const payload = {
                     contents: [{
@@ -407,23 +401,59 @@
                     const pcm16 = new Int16Array(pcmData);
                     const wavBlob = pcmToWav(pcm16, sampleRate);
                     const audioUrl = URL.createObjectURL(wavBlob);
-                    const audio = new Audio(audioUrl);
-                    audio.play();
-                    audio.onended = () => URL.revokeObjectURL(audioUrl);
+                    audioCache[text] = audioUrl;
                 } else {
                     throw new Error("Invalid audio data from API.");
                 }
 
             } catch (error) {
-                console.error("Error al generar o reproducir el audio:", error);
-                if(loadText) loadText.textContent = "Error";
+                console.error(`Error al generar o cachear el audio para "${text}":`, error);
+            }
+        }
+
+        async function playPronunciation(text) {
+            const audioBtn = (currentMode === 'quiz') ? audioButtonQuiz : audioButtonWriting;
+            const icon = (currentMode === 'quiz') ? speakerIconQuiz : speakerIconWriting;
+            const spinner = (currentMode === 'quiz') ? loadingSpinnerQuiz : loadingSpinnerWriting;
+        
+            if (audioCache[text]) {
+                const audio = new Audio(audioCache[text]);
+                audio.play();
+                return;
+            }
+        
+            // Si no está en caché, muestra el spinner y llama a la función de caché para que se encargue de todo
+            if (audioBtn) audioBtn.disabled = true;
+            if(icon) icon.classList.add("hidden");
+            if(spinner) spinner.classList.remove("hidden");
+        
+            try {
+                await fetchAndCacheAudio(text);
+                if (audioCache[text]) {
+                    const audio = new Audio(audioCache[text]);
+                    audio.play();
+                } else {
+                    throw new Error("Audio generation failed.");
+                }
+            } catch (error) {
+                console.error("Error playing audio:", error);
             } finally {
                 if(icon) icon.classList.remove("hidden");
-                if(loadText) loadText.classList.add("hidden");
+                if(spinner) spinner.classList.add("hidden");
                 if (audioBtn) audioBtn.disabled = false;
             }
         }
-        
+
+
+        // Función para pre-cargar el audio de la tarjeta actual
+        function preloadAudioForCard(verb) {
+            // Precargar la pronunciación del phrasal verb
+            fetchAndCacheAudio(verb.english);
+
+            // Precargar la pronunciación del ejemplo en inglés
+            fetchAndCacheAudio(verb.english_example);
+        }
+
         // Función para obtener una traducción de una frase en inglés
         async function getEnglishTranslation(spanishText) {
             try {
@@ -477,6 +507,8 @@
                         currentDynamicExample = { spanish: newSpanishExample, english: newEnglishExample };
                         exampleSentenceQuizEl.textContent = newSpanishExample;
                         quizExampleIsSpanish = true;
+                        // Precargar audio del nuevo ejemplo
+                        preloadAudioForCard({ english_example: newEnglishExample });
                     } else {
                         exampleSentenceQuizEl.textContent = newSpanishExample;
                         currentDynamicExample = { spanish: newSpanishExample, english: "Traducción no disponible." };
@@ -640,6 +672,7 @@
             currentDynamicExample = null;
             updateNavButtons();
             generateChoices(currentVerb.english);
+            preloadAudioForCard(currentVerb);
         }
 
         function generateChoices(correctAnswer) {
@@ -692,6 +725,7 @@
             motivationQuizEs.textContent = motivation.spanish;
             motivationQuizEn.textContent = motivation.english;
             updateQuizScore();
+            playPronunciation(motivation.english);
         }
 
         function updateQuizScore() {
@@ -735,6 +769,7 @@
             writingExampleIsSpanish = true;
             geminiFeedbackContainerWriting.classList.add("hidden");
             updateNavButtons();
+            preloadAudioForCard(currentVerb);
         }
 
         function checkWritingAnswer() {
@@ -761,6 +796,7 @@
 
             motivationWritingEs.textContent = motivation.spanish;
             motivationWritingEn.textContent = motivation.english;
+            playPronunciation(motivation.english);
         }
 
         // Función para alternar el texto de ejemplo
@@ -922,19 +958,6 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
