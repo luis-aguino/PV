@@ -14,6 +14,18 @@
             font-family: 'Inter', sans-serif;
             background-color: #111827;
         }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
@@ -44,11 +56,16 @@
                      <svg id="speaker-icon-quiz" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
                     </svg>
+                    <span id="loading-text-quiz" class="hidden text-sm text-gray-400">Cargando...</span>
                 </button>
-                <span id="loading-text-quiz" class="absolute top-4 right-14 text-sm text-gray-400 hidden">Cargando...</span>
                 <p id="spanish-definition-quiz" class="text-xl sm:text-2xl font-semibold text-gray-200 mb-2"></p>
                 <p id="example-sentence-quiz" class="text-lg text-gray-400 italic cursor-pointer"></p>
             </div>
+
+            <button id="generate-example-quiz" class="mb-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center w-full">
+                <span id="generate-text-quiz">Generar ejemplo ✨</span>
+                <span id="generate-loading-quiz" class="hidden loading-spinner"></span>
+            </button>
 
             <div id="choices-container" class="flex flex-col space-y-4 w-full"></div>
             
@@ -71,6 +88,11 @@
                 <input type="text" id="answer-input" placeholder="Escribe el phrasal verb aquí..." class="w-full bg-gray-600 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400">
             </div>
 
+            <button id="generate-example-writing" class="mb-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center w-full">
+                <span id="generate-text-writing">Generar ejemplo ✨</span>
+                <span id="generate-loading-writing" class="hidden loading-spinner"></span>
+            </button>
+            
             <button id="check-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Comprobar</button>
 
             <div id="writing-feedback-container" class="mt-4 w-full">
@@ -194,6 +216,9 @@
         const audioButtonQuiz = document.getElementById("audio-button-quiz");
         const speakerIconQuiz = document.getElementById("speaker-icon-quiz");
         const loadingTextQuiz = document.getElementById("loading-text-quiz");
+        const generateExampleQuizBtn = document.getElementById("generate-example-quiz");
+        const generateTextQuiz = document.getElementById("generate-text-quiz");
+        const generateLoadingQuiz = document.getElementById("generate-loading-quiz");
 
 
         const spanishDefinitionWritingEl = document.getElementById("spanish-definition-writing");
@@ -209,6 +234,9 @@
         const audioButtonWriting = document.getElementById("audio-button-writing");
         const speakerIcon = document.getElementById("speaker-icon");
         const loadingText = document.getElementById("loading-text");
+        const generateExampleWritingBtn = document.getElementById("generate-example-writing");
+        const generateTextWriting = document.getElementById("generate-text-writing");
+        const generateLoadingWriting = document.getElementById("generate-loading-writing");
 
         const modeButtons = document.querySelectorAll(".mode-button");
         const setButtons = document.querySelectorAll(".set-button");
@@ -270,24 +298,28 @@
             return new Blob([view], { type: 'audio/wav' });
         }
 
-        /**
-         * The following API key is for demonstration purposes. In a public-facing application,
-         * you should use a backend server or a serverless function to securely handle your API key.
-         * For local development or quick demos, you can paste your key here.
-         * Get your key from https://aistudio.google.com/app/apikey
-         */
-        const apiKey = "AIzaSyDUcIYFkrk6nvZPXkNUYCeIu2w-9mmWRoc"; // <--- PEGA TU CLAVE DE API AQUÍ
+        const apiKey = "AIzaSyDUcIYFkrk6nvZPXkNUYCeIu2w-9mmWRoc"; // La clave API se proporcionará automáticamente
 
         async function playPronunciation(text) {
-            const audioBtn = (currentMode === 'quiz') ? audioButtonQuiz : audioButtonWriting;
-            const icon = (currentMode === 'quiz') ? speakerIconQuiz : speakerIcon;
-            const loadText = (currentMode === 'quiz') ? loadingTextQuiz : loadingText;
+            let audioBtn, icon, loadElement;
+
+            if (currentMode === 'quiz') {
+                audioBtn = audioButtonQuiz;
+                icon = speakerIconQuiz;
+                loadElement = loadingTextQuiz;
+            } else {
+                audioBtn = audioButtonWriting;
+                icon = speakerIcon;
+                loadElement = loadingText;
+            }
+
+            if (!audioBtn) return;
 
             audioBtn.disabled = true;
             if(icon) icon.classList.add("hidden");
-            if(loadText) {
-                loadText.classList.remove("hidden");
-                loadText.textContent = "Cargando...";
+            if(loadElement) {
+                loadElement.classList.remove("hidden");
+                loadElement.textContent = "Cargando...";
             }
 
             try {
@@ -350,10 +382,10 @@
 
             } catch (error) {
                 console.error("Error al generar o reproducir el audio:", error);
-                if(loadText) loadText.textContent = "Error";
+                if(loadElement) loadElement.textContent = "Error";
             } finally {
                 if(icon) icon.classList.remove("hidden");
-                if(loadText) loadText.classList.add("hidden");
+                if(loadElement) loadElement.classList.add("hidden");
                 audioBtn.disabled = false;
             }
         }
@@ -595,6 +627,109 @@
             });
         }
 
+        // --- Lógica de la API de Gemini (Generar Ejemplo) ---
+        async function generateNewExample() {
+            const currentVerb = shuffledVerbs[currentIndex];
+            if (!currentVerb) {
+                console.error("No hay phrasal verb seleccionado.");
+                return;
+            }
+
+            let exampleSentenceEl, generateButton, generateTextEl, generateLoadingEl;
+            if (currentMode === 'quiz') {
+                exampleSentenceEl = exampleSentenceQuizEl;
+                generateButton = generateExampleQuizBtn;
+                generateTextEl = generateTextQuiz;
+                generateLoadingEl = generateLoadingQuiz;
+            } else {
+                exampleSentenceEl = exampleSentenceWritingEl;
+                generateButton = generateExampleWritingBtn;
+                generateTextEl = generateTextWriting;
+                generateLoadingEl = generateLoadingWriting;
+            }
+
+            generateButton.disabled = true;
+            generateTextEl.classList.add("hidden");
+            generateLoadingEl.classList.remove("hidden");
+            exampleSentenceEl.textContent = "";
+
+            const prompt = `Generate a simple, two-clause example sentence using the phrasal verb "${currentVerb.english}". The sentence should be conversational. Also, provide a simple Spanish translation. The response must be a valid JSON object. Do not include any other text or formatting.
+            
+            JSON schema:
+            {
+                "english": "string",
+                "spanish": "string"
+            }
+            `;
+
+            try {
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "english": { "type": "STRING" },
+                                "spanish": { "type": "STRING" }
+                            },
+                            "propertyOrdering": ["english", "spanish"]
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-05-20"
+                };
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                let response;
+                let retries = 0;
+                while (retries < 3) {
+                    try {
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (response.status !== 429) break;
+                        await new Promise(res => setTimeout(res, Math.pow(2, retries) * 1000));
+                        retries++;
+                    } catch (err) {
+                        break;
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                const newExample = JSON.parse(jsonText);
+
+                if (newExample.english && newExample.spanish) {
+                    shuffledVerbs[currentIndex].example = newExample.spanish;
+                    shuffledVerbs[currentIndex].english_example = newExample.english;
+                    
+                    exampleSentenceEl.textContent = newExample.spanish;
+                    if (currentMode === 'quiz') {
+                        quizExampleIsSpanish = true;
+                    } else {
+                        writingExampleIsSpanish = true;
+                    }
+                } else {
+                    throw new Error("Invalid JSON structure from API.");
+                }
+
+            } catch (error) {
+                console.error("Error al generar el nuevo ejemplo:", error);
+                exampleSentenceEl.textContent = "Error: No se pudo generar un nuevo ejemplo. Inténtalo de nuevo.";
+            } finally {
+                generateButton.disabled = false;
+                generateTextEl.classList.remove("hidden");
+                generateLoadingEl.classList.add("hidden");
+            }
+        }
+
         // Event Listeners
         modeButtons.forEach(button => {
             button.addEventListener("click", () => {
@@ -659,6 +794,9 @@
                 playPronunciation(shuffledVerbs[currentIndex].english);
             }
         });
+        generateExampleWritingBtn.addEventListener("click", generateNewExample);
+        generateExampleQuizBtn.addEventListener("click", generateNewExample);
+
 
         motivationContainerQuiz.addEventListener('click', () => {
             if (motivationQuizEn.textContent) {
@@ -703,6 +841,27 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
