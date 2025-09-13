@@ -54,7 +54,7 @@
             <div id="phrasal-verb-container" class="bg-gray-700 p-6 sm:p-8 rounded-2xl w-full mb-6 relative">
                 <button id="audio-button-quiz" class="absolute top-4 right-4 bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-full transition-colors duration-200" title="Escuchar pronunciación">
                      <svg id="speaker-icon-quiz" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 0 010 7.072m2.828-9.899a9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
                     </svg>
                     <span id="loading-text-quiz" class="hidden text-sm text-gray-400">Cargando...</span>
                 </button>
@@ -105,7 +105,7 @@
                     <p class="text-lg font-semibold text-gray-200">Respuesta correcta: <span id="correct-answer-text" class="font-bold text-blue-400"></span></p>
                     <button id="audio-button-writing" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-full mt-2 transition-colors duration-200" title="Escuchar pronunciación">
                          <svg id="speaker-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 0 010 7.072m2.828-9.899a9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
                         </svg>
                     </button>
                     <span id="loading-text" class="text-sm text-gray-400 hidden">Cargando...</span>
@@ -264,7 +264,7 @@
         }
 
         // Variable global para la clave de API (será inyectada en el entorno de Canvas)
-        const apiKey = "AIzaSyBucgqDuaY9h20oEpm42Y6vmgboDbwj6-I";
+        const apiKey = "AIzaSyBnPR-nKGvNYTx6PPnTqRyzfVfAuy2bZX4";
 
         // Función para decodificar base64 a un buffer de array
         function base64ToArrayBuffer(base64) {
@@ -315,7 +315,8 @@
                         responseModalities: ["AUDIO"],
                         speechConfig: {
                             voiceConfig: {
-                                prebuiltVoiceConfig: { voiceName: "Algenib" }
+                                // Aquí se cambia la voz a Puck
+                                prebuiltVoiceConfig: { voiceName: "Puck" }
                             }
                         }
                     },
@@ -830,8 +831,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
