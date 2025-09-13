@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -49,7 +47,7 @@
                 </button>
                 <span id="loading-text-quiz" class="absolute top-4 right-14 text-sm text-gray-400 hidden">Cargando...</span>
                 <p id="spanish-definition-quiz" class="text-xl sm:text-2xl font-semibold text-gray-200 mb-2"></p>
-                <p id="example-sentence-quiz" class="text-lg text-gray-400 italic"></p>
+                <p id="example-sentence-quiz" class="text-lg text-gray-400 italic cursor-pointer"></p>
             </div>
 
             <div id="choices-container" class="flex flex-col space-y-4 w-full"></div>
@@ -69,7 +67,7 @@
         <div id="writing-container" class="w-full hidden">
             <div class="bg-gray-700 p-6 sm:p-8 rounded-2xl w-full mb-6">
                 <p id="spanish-definition-writing" class="text-xl sm:text-2xl font-semibold text-gray-200 mb-4"></p>
-                <p id="example-sentence-writing" class="text-lg text-gray-400 italic mb-4"></p>
+                <p id="example-sentence-writing" class="text-lg text-gray-400 italic cursor-pointer"></p>
                 <input type="text" id="answer-input" placeholder="Escribe el phrasal verb aquí..." class="w-full bg-gray-600 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400">
             </div>
 
@@ -104,40 +102,40 @@
     <script>
         // Array de phrasal verbs de Estados Unidos y Canadá
         const usPhrasalVerbs = [
-            { english: "break down", spanish: "averiarse, descomponerse", example: "Mi coche se averió en el camino a casa." },
-            { english: "look for", spanish: "buscar", example: "Estoy buscando mis llaves." },
-            { english: "get up", spanish: "levantarse", example: "Me levanto a las 7 a.m. todos los días." },
-            { english: "take off", spanish: "despegar (avión), quitarse (ropa)", example: "El avión despegará en 10 minutos." },
-            { english: "put on", spanish: "ponerse (ropa)", example: "Me pondré un abrigo porque hace frío." },
-            { english: "turn off", spanish: "apagar", example: "Recuerda apagar las luces antes de salir." },
-            { english: "turn on", spanish: "encender", example: "Enciende la televisión, por favor." },
-            { english: "go on", spanish: "continuar", example: "Puedes continuar con tu historia." },
-            { english: "call off", spanish: "cancelar", example: "Tuvieron que cancelar el partido por la lluvia." },
-            { english: "give up", spanish: "rendirse", example: "Nunca te rindas en tus sueños." },
-            { english: "put off", spanish: "posponer", example: "No pospongas para mañana lo que puedes hacer hoy." },
-            { english: "look after", spanish: "cuidar de", example: "Mi hermana cuidó de mi perro mientras estaba de vacaciones." },
-            { english: "come across", spanish: "encontrarse con", example: "Me encontré con un viejo amigo en el supermercado." },
-            { english: "run out of", spanish: "quedarse sin", example: "Nos hemos quedado sin leche." },
-            { english: "take up", spanish: "empezar un hobby", example: "He empezado a tocar el piano." },
-            { english: "grow up", spanish: "crecer", example: "Él creció en la ciudad de Nueva York." },
-            { english: "hang out", spanish: "pasar el rato", example: "Nos gusta pasar el rato en la cafetería." },
-            { english: "get along with", spanish: "llevarse bien con", example: "Me llevo bien con mi vecino." },
-            { english: "look forward to", spanish: "estar deseando", example: "Estoy deseando verte la próxima semana." },
-            { english: "put up with", spanish: "tolerar, aguantar", example: "No puedo aguantar su mala actitud." }
+            { english: "break down", spanish: "averiarse, descomponerse", example: "Mi coche se averió en el camino a casa.", english_example: "My car broke down on the way home." },
+            { english: "look for", spanish: "buscar", example: "Estoy buscando mis llaves.", english_example: "I'm looking for my keys." },
+            { english: "get up", spanish: "levantarse", example: "Me levanto a las 7 a.m. todos los días.", english_example: "I get up at 7 a.m. every day." },
+            { english: "take off", spanish: "despegar (avión), quitarse (ropa)", example: "El avión despegará en 10 minutos.", english_example: "The plane will take off in 10 minutes." },
+            { english: "put on", spanish: "ponerse (ropa)", example: "Me pondré un abrigo porque hace frío.", english_example: "I'll put on a coat because it's cold." },
+            { english: "turn off", spanish: "apagar", example: "Recuerda apagar las luces antes de salir.", english_example: "Remember to turn off the lights before you leave." },
+            { english: "turn on", spanish: "encender", example: "Enciende la televisión, por favor.", english_example: "Turn on the TV, please." },
+            { english: "go on", spanish: "continuar", example: "Puedes continuar con tu historia.", english_example: "You can go on with your story." },
+            { english: "call off", spanish: "cancelar", example: "Tuvieron que cancelar el partido por la lluvia.", english_example: "They had to call off the game because of the rain." },
+            { english: "give up", spanish: "rendirse", example: "Nunca te rindas en tus sueños.", english_example: "Never give up on your dreams." },
+            { english: "put off", spanish: "posponer", example: "No pospongas para mañana lo que puedes hacer hoy.", english_example: "Don't put off until tomorrow what you can do today." },
+            { english: "look after", spanish: "cuidar de", example: "Mi hermana cuidó de mi perro mientras estaba de vacaciones.", english_example: "My sister looked after my dog while I was on vacation." },
+            { english: "come across", spanish: "encontrarse con", example: "Me encontré con un viejo amigo en el supermercado.", english_example: "I came across an old friend at the supermarket." },
+            { english: "run out of", spanish: "quedarse sin", example: "Nos hemos quedado sin leche.", english_example: "We have run out of milk." },
+            { english: "take up", spanish: "empezar un hobby", example: "He empezado a tocar el piano.", english_example: "I have taken up playing the piano." },
+            { english: "grow up", spanish: "crecer", example: "Él creció en la ciudad de Nueva York.", english_example: "He grew up in New York City." },
+            { english: "hang out", spanish: "pasar el rato", example: "Nos gusta pasar el rato en la cafetería.", english_example: "We like to hang out at the cafe." },
+            { english: "get along with", spanish: "llevarse bien con", example: "Me llevo bien con mi vecino.", english_example: "I get along with my neighbor." },
+            { english: "look forward to", spanish: "estar deseando", example: "Estoy deseando verte la próxima semana.", english_example: "I am looking forward to seeing you next week." },
+            { english: "put up with", spanish: "tolerar, aguantar", example: "No puedo aguantar su mala actitud.", english_example: "I can't put up with his bad attitude." }
         ];
 
         // Nuevo array de phrasal verbs del Reino Unido
         const ukPhrasalVerbs = [
-            { english: "get off", spanish: "bajarse (de un bus, tren)", example: "Me bajé del autobús en la siguiente parada." },
-            { english: "cheer on", spanish: "animar a", example: "Estuvimos animando a nuestro equipo favorito." },
-            { english: "hold on", spanish: "esperar (en el teléfono)", example: "Espera un momento, por favor." },
-            { english: "pop in", spanish: "pasar de visita", example: "Mi tía pasó de visita para tomar un té." },
-            { english: "send off", spanish: "expulsar (del campo de juego)", example: "El árbitro lo expulsó por una falta." },
-            { english: "go off", spanish: "sonar (una alarma)", example: "La alarma sonó a las 6 de la mañana." },
-            { english: "bring up", spanish: "educar, criar", example: "Fui criado por mis abuelos." },
-            { english: "look into", spanish: "investigar", example: "La policía está investigando el caso." },
-            { english: "fall out", spanish: "discutir con", example: "Ellos discutieron por un desacuerdo simple." },
-            { english: "get round to", spanish: "encontrar tiempo para", example: "Finalmente encontré tiempo para reparar la bicicleta." },
+            { english: "get off", spanish: "bajarse (de un bus, tren)", example: "Me bajé del autobús en la siguiente parada.", english_example: "I got off the bus at the next stop." },
+            { english: "cheer on", spanish: "animar a", example: "Estuvimos animando a nuestro equipo favorito.", english_example: "We were cheering on our favorite team." },
+            { english: "hold on", spanish: "esperar (en el teléfono)", example: "Espera un momento, por favor.", english_example: "Hold on a moment, please." },
+            { english: "pop in", spanish: "pasar de visita", example: "Mi tía pasó de visita para tomar un té.", english_example: "My aunt popped in for a cup of tea." },
+            { english: "send off", spanish: "expulsar (del campo de juego)", example: "El árbitro lo expulsó por una falta.", english_example: "The referee sent him off for a foul." },
+            { english: "go off", spanish: "sonar (una alarma)", example: "La alarma sonó a las 6 de la mañana.", english_example: "The alarm went off at 6 in the morning." },
+            { english: "bring up", spanish: "educar, criar", example: "Fui criado por mis abuelos.", english_example: "I was brought up by my grandparents." },
+            { english: "look into", spanish: "investigar", example: "La policía está investigando el caso.", english_example: "The police are looking into the case." },
+            { english: "fall out", spanish: "discutir con", example: "Ellos discutieron por un desacuerdo simple.", english_example: "They fell out over a simple disagreement." },
+            { english: "get round to", spanish: "encontrar tiempo para", example: "Finalmente encontré tiempo para reparar la bicicleta.", english_example: "I finally got round to fixing the bike." },
         ];
 
         // Mensajes de motivación
@@ -217,6 +215,10 @@
         const backButton = document.getElementById("back-button");
         const nextButton = document.getElementById("next-button");
         const homeButton = document.getElementById("home-button");
+        
+        // Estado del texto de ejemplo para alternar entre español e inglés
+        let quizExampleIsSpanish = true;
+        let writingExampleIsSpanish = true;
 
         // Helper functions for TTS API
         function base64ToArrayBuffer(base64) {
@@ -427,7 +429,6 @@
                 showModal(`¡Has completado todas las tarjetas! Puntuación final: ${score} de ${totalAttempts}. Reiniciando...`, startQuiz);
                 return;
             }
-
             const currentVerb = shuffledVerbs[currentIndex];
             spanishDefinitionQuizEl.textContent = currentVerb.spanish;
             exampleSentenceQuizEl.textContent = currentVerb.example;
@@ -436,6 +437,7 @@
             motivationQuizEn.textContent = "";
             motivationQuizEn.classList.add("hidden");
             choiceMade = false;
+            quizExampleIsSpanish = true;
             updateNavButtons();
             generateChoices(currentVerb.english);
         }
@@ -530,6 +532,7 @@
             motivationWritingEs.textContent = "";
             motivationWritingEn.textContent = "";
             motivationWritingEn.classList.add("hidden");
+            writingExampleIsSpanish = true;
             updateNavButtons();
         }
 
@@ -672,11 +675,51 @@
             }
         });
 
+        // Eventos para el texto de ejemplo
+        exampleSentenceQuizEl.addEventListener('click', () => {
+            const currentVerb = shuffledVerbs[currentIndex];
+            if (quizExampleIsSpanish) {
+                exampleSentenceQuizEl.textContent = currentVerb.english_example;
+                playPronunciation(currentVerb.english_example);
+            } else {
+                exampleSentenceQuizEl.textContent = currentVerb.example;
+            }
+            quizExampleIsSpanish = !quizExampleIsSpanish;
+        });
+
+        exampleSentenceWritingEl.addEventListener('click', () => {
+            const currentVerb = shuffledVerbs[currentIndex];
+            if (writingExampleIsSpanish) {
+                exampleSentenceWritingEl.textContent = currentVerb.english_example;
+                playPronunciation(currentVerb.english_example);
+            } else {
+                exampleSentenceWritingEl.textContent = currentVerb.example;
+            }
+            writingExampleIsSpanish = !writingExampleIsSpanish;
+        });
+
         // Start with the initial selection view
         showSelectionMode();
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
