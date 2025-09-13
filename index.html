@@ -772,19 +772,22 @@
                     // Si hay un ejemplo dinámico, alternar entre su versión en español e inglés
                     const textToDisplay = quizExampleIsSpanish ? currentDynamicExample.english : currentDynamicExample.spanish;
                     exampleSentenceQuizEl.textContent = textToDisplay;
-                    playPronunciation(textToDisplay);
+                    // Solo reproduce la voz en inglés
+                    if (quizExampleIsSpanish) playPronunciation(currentDynamicExample.english);
                     quizExampleIsSpanish = !quizExampleIsSpanish;
                 } else {
                     // Si no, usar los ejemplos estáticos
                     const textToDisplay = quizExampleIsSpanish ? currentVerb.english_example : currentVerb.example;
                     exampleSentenceQuizEl.textContent = textToDisplay;
-                    playPronunciation(textToDisplay);
+                    // Solo reproduce la voz en inglés
+                    if (quizExampleIsSpanish) playPronunciation(currentVerb.english_example);
                     quizExampleIsSpanish = !quizExampleIsSpanish;
                 }
             } else if (mode === 'writing') {
                 const textToDisplay = writingExampleIsSpanish ? currentVerb.english_example : currentVerb.example;
                 exampleSentenceWritingEl.textContent = textToDisplay;
-                playPronunciation(textToDisplay);
+                // Solo reproduce la voz en inglés
+                if (writingExampleIsSpanish) playPronunciation(currentVerb.english_example);
                 writingExampleIsSpanish = !writingExampleIsSpanish;
             }
         }
@@ -863,8 +866,7 @@
                 // Va a cambiar a inglés, reproduce el audio en inglés
                 playPronunciation(motivationQuizEn.textContent);
             } else {
-                // Va a cambiar a español, reproduce el audio en español
-                playPronunciation(motivationQuizEs.textContent);
+                // Va a cambiar a español, NO reproduce audio
             }
             motivationQuizEs.classList.toggle("hidden");
             motivationQuizEn.classList.toggle("hidden");
@@ -876,8 +878,7 @@
                 // Va a cambiar a inglés, reproduce el audio en inglés
                 playPronunciation(motivationWritingEn.textContent);
             } else {
-                // Va a cambiar a español, reproduce el audio en español
-                playPronunciation(motivationWritingEs.textContent);
+                // Va a cambiar a español, NO reproduce audio
             }
             motivationWritingEs.classList.toggle("hidden");
             motivationWritingEn.classList.toggle("hidden");
@@ -921,5 +922,19 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
