@@ -248,9 +248,25 @@
         // Estado del texto de ejemplo para alternar entre español e inglés
         let quizExampleIsSpanish = true;
         let writingExampleIsSpanish = true;
+        
+        // Función para manejar la reproducción de audio
+        function playPcm(pcmData) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const buffer = audioContext.createBuffer(1, pcmData.length, 16000); // Sample rate de 16kHz
+            const nowBuffering = buffer.getChannelData(0);
+            for (let i = 0; i < pcmData.length; i++) {
+                nowBuffering[i] = pcmData[i] / 32768; // Convertir 16-bit signed int a float
+            }
+            const source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioContext.destination);
+            source.start();
+        }
 
-        // Helper functions for TTS API
-        // Function to convert base64 to ArrayBuffer
+        // Variable global para la clave de API (será inyectada en el entorno de Canvas)
+        const apiKey = "AIzaSyB_sVXWkzQM-yi-g0c24a7Bbfx2cErBA8I";
+
+        // Función para decodificar base64 a un buffer de array
         function base64ToArrayBuffer(base64) {
             const binaryString = window.atob(base64);
             const len = binaryString.length;
@@ -260,22 +276,6 @@
             }
             return bytes.buffer;
         }
-
-        // Use Web Audio API to play the PCM data
-        function playPcm(pcmData, sampleRate) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const buffer = audioContext.createBuffer(1, pcmData.length, sampleRate);
-            const nowBuffering = buffer.getChannelData(0);
-            for (let i = 0; i < pcmData.length; i++) {
-                nowBuffering[i] = pcmData[i] / 32768; // Convert 16-bit signed int to float
-            }
-            const source = audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioContext.destination);
-            source.start();
-        }
-
-        const apiKey = "AIzaSyCY1cO190_V9QaUQfYUcJzwUf5RWfwvmlo"; // La clave API se proporcionará automáticamente
 
         async function playPronunciation(text) {
             let audioBtn, icon, loadElement;
@@ -291,17 +291,17 @@
             }
 
             if (!audioBtn) return;
-            
+
             // Si el audio ya está en caché, lo reproducimos de inmediato
             if (audioCache.has(text)) {
-                const audioBuffer = audioCache.get(text);
-                playPcm(audioBuffer.pcmData, audioBuffer.sampleRate);
+                const pcm16 = audioCache.get(text);
+                playPcm(pcm16);
                 return;
             }
 
             audioBtn.disabled = true;
-            if(icon) icon.classList.add("hidden");
-            if(loadElement) {
+            if (icon) icon.classList.add("hidden");
+            if (loadElement) {
                 loadElement.classList.remove("hidden");
                 loadElement.textContent = "Cargando...";
             }
@@ -323,7 +323,7 @@
                 };
 
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-                
+
                 let response;
                 let retries = 0;
                 while (retries < 3) {
@@ -340,39 +340,41 @@
                         break;
                     }
                 }
-                
+
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.[0];
-                const audioData = part?.inlineData?.data;
-                const mimeType = part?.inlineData?.mimeType;
-
-                if (audioData && mimeType && mimeType.startsWith("audio/")) {
-                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
-                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
-                    const pcmData = base64ToArrayBuffer(audioData);
-                    const pcm16 = new Int16Array(pcmData);
-                    
-                    // Almacenamos el buffer de audio en el caché
-                    audioCache.set(text, { pcmData: pcm16, sampleRate: sampleRate });
-                    
-                    playPcm(pcm16, sampleRate);
+                     if (response.status === 400 && apiKey === "TU_CLAVE_API_AQUI") {
+                        showModal("Error: Clave de API no válida. Por favor, asegúrate de haber configurado tu clave de API correctamente.", null);
+                    } else {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
                 } else {
-                    throw new Error("Invalid audio data from API.");
+                    const result = await response.json();
+                    const part = result?.candidates?.[0]?.content?.parts?.[0];
+                    const audioData = part?.inlineData?.data;
+
+                    if (audioData) {
+                        const pcmData = base64ToArrayBuffer(audioData);
+                        const pcm16 = new Int16Array(pcmData);
+
+                        // Almacenamos el buffer de audio en el caché
+                        audioCache.set(text, pcm16);
+
+                        playPcm(pcm16);
+                    } else {
+                        throw new Error("Invalid audio data from API.");
+                    }
                 }
 
             } catch (error) {
                 console.error("Error al generar o reproducir el audio:", error);
-                if(loadElement) loadElement.textContent = "Error";
+                if (loadElement) loadElement.textContent = "Error";
             } finally {
-                if(icon) icon.classList.remove("hidden");
-                if(loadElement) loadElement.classList.add("hidden");
+                if (icon) icon.classList.remove("hidden");
+                if (loadElement) loadElement.classList.add("hidden");
                 audioBtn.disabled = false;
             }
         }
+
 
         // Función para mezclar el array (algoritmo Fisher-Yates)
         function shuffleArray(array) {
@@ -683,27 +685,30 @@
                 }
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                const newExample = JSON.parse(jsonText);
-
-                if (newExample.english && newExample.spanish) {
-                    shuffledVerbs[currentIndex].example = newExample.spanish;
-                    shuffledVerbs[currentIndex].english_example = newExample.english;
-                    
-                    exampleSentenceEl.textContent = newExample.spanish;
-                    if (currentMode === 'quiz') {
-                        quizExampleIsSpanish = true;
-                    } else {
-                        writingExampleIsSpanish = true;
-                    }
+                     if (response.status === 400 && apiKey === "TU_CLAVE_API_AQUI") {
+                         showModal("Error: Clave de API no válida. Por favor, asegúrate de haber configurado tu clave de API correctamente.", null);
+                     } else {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                     }
                 } else {
-                    throw new Error("Invalid JSON structure from API.");
-                }
+                    const result = await response.json();
+                    const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    const newExample = JSON.parse(jsonText);
 
+                    if (newExample.english && newExample.spanish) {
+                        shuffledVerbs[currentIndex].example = newExample.spanish;
+                        shuffledVerbs[currentIndex].english_example = newExample.english;
+                        
+                        exampleSentenceEl.textContent = newExample.spanish;
+                        if (currentMode === 'quiz') {
+                            quizExampleIsSpanish = true;
+                        } else {
+                            writingExampleIsSpanish = true;
+                        }
+                    } else {
+                        throw new Error("Invalid JSON structure from API.");
+                    }
+                }
             } catch (error) {
                 console.error("Error al generar el nuevo ejemplo:", error);
                 exampleSentenceEl.textContent = "Error: No se pudo generar un nuevo ejemplo. Inténtalo de nuevo.";
@@ -825,36 +830,6 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
