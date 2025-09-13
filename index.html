@@ -14,6 +14,24 @@
             font-family: 'Inter', sans-serif;
             background-color: #111827;
         }
+
+        .modal {
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
@@ -41,14 +59,21 @@
         <div id="quiz-container" class="w-full hidden">
             <div id="phrasal-verb-container" class="bg-gray-700 p-6 sm:p-8 rounded-2xl w-full mb-6 relative">
                 <button id="audio-button-quiz" class="absolute top-4 right-4 bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-full transition-colors duration-200" title="Escuchar pronunciación">
-                     <svg id="speaker-icon-quiz" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg id="speaker-icon-quiz" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
                     </svg>
                 </button>
                 <span id="loading-text-quiz" class="absolute top-4 right-14 text-sm text-gray-400 hidden">Cargando...</span>
                 <p id="spanish-definition-quiz" class="text-xl sm:text-2xl font-semibold text-gray-200 mb-2"></p>
                 <p id="example-sentence-quiz" class="text-lg text-gray-400 italic cursor-pointer"></p>
+                <p id="gemini-loading-quiz" class="text-lg text-gray-400 italic hidden">Generando nuevo ejemplo...</p>
             </div>
+            
+            <button id="gemini-new-example-button-quiz" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full mb-4 flex justify-center items-center gap-2">
+                <span id="gemini-button-text-quiz">Generar nuevo ejemplo ✨</span>
+                <div id="gemini-spinner-quiz" class="loading-spinner hidden"></div>
+            </button>
+
 
             <div id="choices-container" class="flex flex-col space-y-4 w-full"></div>
             
@@ -71,7 +96,17 @@
                 <input type="text" id="answer-input" placeholder="Escribe el phrasal verb aquí..." class="w-full bg-gray-600 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400">
             </div>
 
-            <button id="check-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Comprobar</button>
+            <div id="gemini-feedback-container-writing" class="bg-gray-700 p-4 rounded-xl mt-4 hidden">
+                <p class="text-sm font-semibold text-white mb-2">Feedback de la IA:</p>
+                <p id="gemini-feedback-writing" class="text-sm text-gray-300"></p>
+            </div>
+            
+            <button id="check-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full mt-4">Comprobar</button>
+            <button id="gemini-check-button-writing" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full mt-4 flex justify-center items-center gap-2">
+                <span id="gemini-check-button-text">Verificar mi oración ✨</span>
+                <div id="gemini-check-spinner" class="loading-spinner hidden"></div>
+            </button>
+
 
             <div id="writing-feedback-container" class="mt-4 w-full">
                 <p id="feedback-writing" class="h-6 text-sm font-medium transition-opacity duration-300 mb-2"></p>
@@ -82,7 +117,7 @@
                 <div id="answer-reveal-container" class="bg-gray-700 p-4 rounded-xl mt-4 hidden">
                     <p class="text-lg font-semibold text-gray-200">Respuesta correcta: <span id="correct-answer-text" class="font-bold text-blue-400"></span></p>
                     <button id="audio-button-writing" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-full mt-2 transition-colors duration-200" title="Escuchar pronunciación">
-                         <svg id="speaker-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg id="speaker-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.293-4.293a1 1 0 011.414 0z" />
                         </svg>
                     </button>
@@ -96,6 +131,15 @@
             <button id="back-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex-1 disabled:opacity-50 disabled:cursor-not-allowed">Atrás</button>
             <button id="next-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex-1">Siguiente</button>
             <button id="home-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105 flex-1">Inicio</button>
+        </div>
+    </div>
+
+    <!-- Modal de fin de set -->
+    <div id="modal-container" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden modal z-50">
+        <div class="bg-gray-800 p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full">
+            <h2 id="modal-title" class="text-2xl font-bold text-white mb-4"></h2>
+            <p id="modal-message" class="text-gray-300 mb-6"></p>
+            <button id="modal-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 w-full">Reiniciar</button>
         </div>
     </div>
 
@@ -173,6 +217,9 @@
         let currentMode = 'selection';
         let choiceMade = false;
         let lastMotivationIndex = -1;
+        // Objeto para almacenar el ejemplo dinámico generado por la IA y su traducción
+        let currentDynamicExample = null;
+
 
         // Elementos del DOM
         const selectionContainer = document.getElementById("selection-container");
@@ -181,6 +228,10 @@
         const quizContainer = document.getElementById("quiz-container");
         const writingContainer = document.getElementById("writing-container");
         const navButtonsContainer = document.getElementById("nav-buttons-container");
+        const modalContainer = document.getElementById("modal-container");
+        const modalTitle = document.getElementById("modal-title");
+        const modalMessage = document.getElementById("modal-message");
+        const modalButton = document.getElementById("modal-button");
 
         const spanishDefinitionQuizEl = document.getElementById("spanish-definition-quiz");
         const exampleSentenceQuizEl = document.getElementById("example-sentence-quiz");
@@ -194,6 +245,10 @@
         const audioButtonQuiz = document.getElementById("audio-button-quiz");
         const speakerIconQuiz = document.getElementById("speaker-icon-quiz");
         const loadingTextQuiz = document.getElementById("loading-text-quiz");
+        const geminiNewExampleButtonQuiz = document.getElementById("gemini-new-example-button-quiz");
+        const geminiButtonTextQuiz = document.getElementById("gemini-button-text-quiz");
+        const geminiSpinnerQuiz = document.getElementById("gemini-spinner-quiz");
+        const geminiLoadingQuiz = document.getElementById("gemini-loading-quiz");
 
 
         const spanishDefinitionWritingEl = document.getElementById("spanish-definition-writing");
@@ -209,6 +264,11 @@
         const audioButtonWriting = document.getElementById("audio-button-writing");
         const speakerIcon = document.getElementById("speaker-icon");
         const loadingText = document.getElementById("loading-text");
+        const geminiCheckButtonWriting = document.getElementById("gemini-check-button-writing");
+        const geminiCheckButtonText = document.getElementById("gemini-check-button-text");
+        const geminiCheckSpinner = document.getElementById("gemini-check-spinner");
+        const geminiFeedbackContainerWriting = document.getElementById("gemini-feedback-container-writing");
+        const geminiFeedbackWriting = document.getElementById("gemini-feedback-writing");
 
         const modeButtons = document.querySelectorAll(".mode-button");
         const setButtons = document.querySelectorAll(".set-button");
@@ -271,19 +331,42 @@
         }
 
         /**
-         * The following API key is for demonstration purposes. In a public-facing application,
-         * you should use a backend server or a serverless function to securely handle your API key.
-         * For local development or quick demos, you can paste your key here.
-         * Get your key from https://aistudio.google.com/app/apikey
+         * La siguiente clave de API está vacía. El entorno de Canvas la proporcionará en tiempo de ejecución.
          */
-        const apiKey = "AIzaSyDUcIYFkrk6nvZPXkNUYCeIu2w-9mmWRoc"; // <--- PEGA TU CLAVE DE API AQUÍ
+        const apiKey = "";
+        const geminiTextApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const geminiTtsApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+
+        const fetchWithRetry = async (url, options, retries = 5, delay = 1000) => {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 429 && retries > 0) {
+                    console.warn(`Too many requests. Retrying in ${delay / 1000}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response;
+            } catch (error) {
+                if (retries > 0) {
+                    console.warn(`Network error. Retrying in ${delay / 1000}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        };
 
         async function playPronunciation(text) {
             const audioBtn = (currentMode === 'quiz') ? audioButtonQuiz : audioButtonWriting;
             const icon = (currentMode === 'quiz') ? speakerIconQuiz : speakerIcon;
             const loadText = (currentMode === 'quiz') ? loadingTextQuiz : loadingText;
 
-            audioBtn.disabled = true;
+            // Evita que se activen varios audios a la vez
+            if (audioBtn) audioBtn.disabled = true;
             if(icon) icon.classList.add("hidden");
             if(loadText) {
                 loadText.classList.remove("hidden");
@@ -306,28 +389,11 @@
                     model: "gemini-2.5-flash-preview-tts"
                 };
 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-                
-                let response;
-                let retries = 0;
-                while (retries < 3) {
-                    try {
-                        response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        if (response.status !== 429) break;
-                        await new Promise(res => setTimeout(res, Math.pow(2, retries) * 1000));
-                        retries++;
-                    } catch (err) {
-                        break;
-                    }
-                }
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                const response = await fetchWithRetry(geminiTtsApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
                 const result = await response.json();
                 const part = result?.candidates?.[0]?.content?.parts?.[0];
@@ -354,9 +420,124 @@
             } finally {
                 if(icon) icon.classList.remove("hidden");
                 if(loadText) loadText.classList.add("hidden");
-                audioBtn.disabled = false;
+                if (audioBtn) audioBtn.disabled = false;
             }
         }
+        
+        // Función para obtener una traducción de una frase en inglés
+        async function getEnglishTranslation(spanishText) {
+            try {
+                const prompt = `Traduce la siguiente oración del español al inglés de forma concisa. Solo da la traducción: "${spanishText}"`;
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }]
+                };
+                const response = await fetchWithRetry(geminiTextApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                return result?.candidates?.[0]?.content?.parts?.[0]?.text;
+            } catch (error) {
+                console.error("Error al obtener la traducción:", error);
+                return null;
+            }
+        }
+
+
+        // --- Nuevas funciones de la API de Gemini ---
+        async function generateNewExample(phrasalVerb, definition) {
+            geminiNewExampleButtonQuiz.disabled = true;
+            geminiButtonTextQuiz.classList.add("hidden");
+            geminiSpinnerQuiz.classList.remove("hidden");
+            geminiLoadingQuiz.classList.remove("hidden");
+            exampleSentenceQuizEl.textContent = "";
+
+            try {
+                // Genera un nuevo ejemplo en español
+                const prompt = `Actúa como un tutor de inglés. Proporciona un nuevo y claro ejemplo de oración en español que use el phrasal verb "${phrasalVerb}". La definición es "${definition}". La oración debe ser diferente del ejemplo común y debe sonar natural. Proporciona solo la oración.`;
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }]
+                };
+
+                const response = await fetchWithRetry(geminiTextApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const newSpanishExample = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (newSpanishExample) {
+                    // Obtiene la traducción al inglés del nuevo ejemplo
+                    const newEnglishExample = await getEnglishTranslation(newSpanishExample);
+                    
+                    if (newEnglishExample) {
+                        currentDynamicExample = { spanish: newSpanishExample, english: newEnglishExample };
+                        exampleSentenceQuizEl.textContent = newSpanishExample;
+                        quizExampleIsSpanish = true;
+                    } else {
+                        exampleSentenceQuizEl.textContent = newSpanishExample;
+                        currentDynamicExample = { spanish: newSpanishExample, english: "Traducción no disponible." };
+                        quizExampleIsSpanish = true;
+                        console.error("No se pudo obtener la traducción al inglés.");
+                    }
+                } else {
+                    exampleSentenceQuizEl.textContent = "No se pudo generar un nuevo ejemplo. Inténtalo de nuevo.";
+                    currentDynamicExample = null;
+                }
+            } catch (error) {
+                console.error("Error al generar un nuevo ejemplo:", error);
+                exampleSentenceQuizEl.textContent = "Error de conexión. Inténtalo de nuevo más tarde.";
+                currentDynamicExample = null;
+            } finally {
+                geminiNewExampleButtonQuiz.disabled = false;
+                geminiButtonTextQuiz.classList.remove("hidden");
+                geminiSpinnerQuiz.classList.add("hidden");
+                geminiLoadingQuiz.classList.add("hidden");
+            }
+        }
+
+        async function checkUserSentence(phrasalVerb, userSentence, definition) {
+            geminiCheckButtonWriting.disabled = true;
+            geminiCheckButtonText.classList.add("hidden");
+            geminiCheckSpinner.classList.remove("hidden");
+
+            try {
+                const prompt = `Actúa como un tutor de gramática. Revisa la siguiente oración en español: "${userSentence}". El usuario debe usar el phrasal verb "${phrasalVerb}" (que significa "${definition}"). Proporciona feedback sobre la corrección de la gramática y el uso del phrasal verb. Si la oración es incorrecta, sugiere una forma de mejorarla. Responde en español, de forma concisa.`;
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }]
+                };
+
+                const response = await fetchWithRetry(geminiTextApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const feedback = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (feedback) {
+                    geminiFeedbackWriting.textContent = feedback;
+                    geminiFeedbackContainerWriting.classList.remove("hidden");
+                } else {
+                    geminiFeedbackWriting.textContent = "No se pudo generar feedback. Inténtalo de nuevo.";
+                    geminiFeedbackContainerWriting.classList.remove("hidden");
+                }
+
+            } catch (error) {
+                console.error("Error al verificar la oración:", error);
+                geminiFeedbackWriting.textContent = "Error de conexión. Inténtalo de nuevo más tarde.";
+                geminiFeedbackContainerWriting.classList.remove("hidden");
+            } finally {
+                geminiCheckButtonWriting.disabled = false;
+                geminiCheckButtonText.classList.remove("hidden");
+                geminiCheckSpinner.classList.add("hidden");
+            }
+        }
+
 
         // Función para mezclar el array (algoritmo Fisher-Yates)
         function shuffleArray(array) {
@@ -375,6 +556,23 @@
                 english: englishMotivationalMessages[index]
             };
         }
+
+        // Muestra el modal de confirmación
+        function showModal(title, message, onConfirm) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalButton.onclick = () => {
+                hideModal();
+                onConfirm();
+            };
+            modalContainer.classList.remove("hidden");
+        }
+
+        // Oculta el modal de confirmación
+        function hideModal() {
+            modalContainer.classList.add("hidden");
+        }
+
 
         function showSelectionMode() {
             currentMode = 'selection';
@@ -426,7 +624,7 @@
                 return;
             }
             if (currentIndex >= shuffledVerbs.length) {
-                showModal(`¡Has completado todas las tarjetas! Puntuación final: ${score} de ${totalAttempts}. Reiniciando...`, startQuiz);
+                showModal("¡Set Completado!", `Has completado todas las tarjetas. Puntuación final: ${score} de ${totalAttempts}.`, () => startQuiz());
                 return;
             }
             const currentVerb = shuffledVerbs[currentIndex];
@@ -438,6 +636,8 @@
             motivationQuizEn.classList.add("hidden");
             choiceMade = false;
             quizExampleIsSpanish = true;
+            // Reinicia el ejemplo dinámico
+            currentDynamicExample = null;
             updateNavButtons();
             generateChoices(currentVerb.english);
         }
@@ -516,7 +716,7 @@
                 return;
             }
             if (currentIndex >= shuffledVerbs.length) {
-                showModal("¡Has completado todas las tarjetas! Reiniciando...", startWritingPractice);
+                showModal("¡Set Completado!", "Has completado todas las tarjetas. ¡Sigue practicando!", () => startWritingPractice());
                 return;
             }
 
@@ -533,6 +733,7 @@
             motivationWritingEn.textContent = "";
             motivationWritingEn.classList.add("hidden");
             writingExampleIsSpanish = true;
+            geminiFeedbackContainerWriting.classList.add("hidden");
             updateNavButtons();
         }
 
@@ -540,68 +741,62 @@
             const currentVerb = shuffledVerbs[currentIndex];
             const userAnswer = answerInput.value.trim().toLowerCase();
             const correctAnswer = currentVerb.english.toLowerCase();
+            const motivation = getRandomMotivation();
 
             answerInput.disabled = true;
             checkButton.classList.add("hidden");
             answerRevealContainer.classList.remove("hidden");
+            geminiCheckButtonWriting.classList.add("hidden");
             correctAnswerText.textContent = currentVerb.english;
-
+            
             if (userAnswer === correctAnswer) {
-                feedbackWritingEl.textContent = "¡Correcto!";
+                feedbackWritingEl.textContent = "¡Correcto! ¡Excelente!";
                 feedbackWritingEl.classList.remove("text-red-400");
                 feedbackWritingEl.classList.add("text-green-400");
             } else {
-                feedbackWritingEl.textContent = "Incorrecto.";
+                feedbackWritingEl.textContent = "Incorrecto. ¡No te rindas! Inténtalo de nuevo.";
                 feedbackWritingEl.classList.remove("text-green-400");
                 feedbackWritingEl.classList.add("text-red-400");
             }
 
-            const motivation = getRandomMotivation();
             motivationWritingEs.textContent = motivation.spanish;
             motivationWritingEn.textContent = motivation.english;
         }
 
-        // --- Lógica general ---
-        function updateNavButtons() {
-            if (currentIndex === 0) {
-                backButton.disabled = true;
-                backButton.classList.add("opacity-50", "cursor-not-allowed");
-            } else {
-                backButton.disabled = false;
-                backButton.classList.remove("opacity-50", "cursor-not-allowed");
-            }
+        // Función para alternar el texto de ejemplo
+        function toggleExampleSentence(mode) {
+            const currentVerb = shuffledVerbs[currentIndex];
 
-            if (currentIndex === shuffledVerbs.length - 1) {
-                nextButton.textContent = "Finalizar";
-            } else {
-                nextButton.textContent = "Siguiente";
+            if (mode === 'quiz') {
+                if (currentDynamicExample) {
+                    // Si hay un ejemplo dinámico, alternar entre su versión en español e inglés
+                    const textToDisplay = quizExampleIsSpanish ? currentDynamicExample.english : currentDynamicExample.spanish;
+                    exampleSentenceQuizEl.textContent = textToDisplay;
+                    playPronunciation(textToDisplay);
+                    quizExampleIsSpanish = !quizExampleIsSpanish;
+                } else {
+                    // Si no, usar los ejemplos estáticos
+                    const textToDisplay = quizExampleIsSpanish ? currentVerb.english_example : currentVerb.example;
+                    exampleSentenceQuizEl.textContent = textToDisplay;
+                    playPronunciation(textToDisplay);
+                    quizExampleIsSpanish = !quizExampleIsSpanish;
+                }
+            } else if (mode === 'writing') {
+                const textToDisplay = writingExampleIsSpanish ? currentVerb.english_example : currentVerb.example;
+                exampleSentenceWritingEl.textContent = textToDisplay;
+                playPronunciation(textToDisplay);
+                writingExampleIsSpanish = !writingExampleIsSpanish;
             }
         }
 
-        function showModal(message, onRestart) {
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center';
-            modal.innerHTML = `
-                <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center">
-                    <p class="text-xl font-bold mb-4 text-white">${message}</p>
-                    <button id="close-modal" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl">Cerrar</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
 
-            document.getElementById('close-modal').addEventListener('click', () => {
-                document.body.removeChild(modal);
-                if (onRestart) onRestart();
-            });
-        }
-
-        // Event Listeners
+        // --- Manejo de Eventos ---
         modeButtons.forEach(button => {
             button.addEventListener("click", () => {
-                const mode = button.dataset.mode;
+                const mode = button.getAttribute("data-mode");
                 if (mode === 'quiz') {
                     showQuizSetSelection();
-                } else if (mode === 'writing') {
+                } else {
                     showWritingSetSelection();
                 }
             });
@@ -609,12 +804,12 @@
 
         setButtons.forEach(button => {
             button.addEventListener("click", () => {
-                const dataset = button.dataset.set;
-                if (dataset === "us") {
-                    selectedVerbs = [...usPhrasalVerbs];
-                } else if (dataset === "uk") {
-                    selectedVerbs = [...ukPhrasalVerbs];
-                } else if (dataset === "all") {
+                const set = button.getAttribute("data-set");
+                if (set === 'us') {
+                    selectedVerbs = usPhrasalVerbs;
+                } else if (set === 'uk') {
+                    selectedVerbs = ukPhrasalVerbs;
+                } else {
                     selectedVerbs = [...usPhrasalVerbs, ...ukPhrasalVerbs];
                 }
 
@@ -625,18 +820,7 @@
                 }
             });
         });
-        
-        // Navigation Buttons
-        backButton.addEventListener("click", () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-                if (currentMode === 'quiz') {
-                    showQuizCard();
-                } else if (currentMode === 'writing') {
-                    showWritingCard();
-                }
-            }
-        });
+
         nextButton.addEventListener("click", () => {
             currentIndex++;
             if (currentMode === 'quiz') {
@@ -645,60 +829,94 @@
                 showWritingCard();
             }
         });
-        homeButton.addEventListener("click", showSelectionMode);
 
-        // Writing Mode
+        backButton.addEventListener("click", () => {
+            currentIndex--;
+            if (currentMode === 'quiz') {
+                showQuizCard();
+            } else if (currentMode === 'writing') {
+                showWritingCard();
+            }
+        });
+
+        homeButton.addEventListener("click", () => {
+            showSelectionMode();
+        });
+
         checkButton.addEventListener("click", checkWritingAnswer);
-        audioButtonWriting.addEventListener("click", () => {
-            if (shuffledVerbs[currentIndex]) {
-                playPronunciation(shuffledVerbs[currentIndex].english);
-            }
-        });
-        audioButtonQuiz.addEventListener("click", () => {
-            if (shuffledVerbs[currentIndex]) {
-                playPronunciation(shuffledVerbs[currentIndex].english);
+
+        // Enter key for writing mode
+        answerInput.addEventListener("keyup", (event) => {
+            if (event.key === "Enter" && answerInput.value.trim() !== "") {
+                checkWritingAnswer();
             }
         });
 
-        motivationContainerQuiz.addEventListener('click', () => {
-            if (motivationQuizEn.textContent) {
+        // Toggle example sentence listener
+        exampleSentenceQuizEl.addEventListener("click", () => toggleExampleSentence('quiz'));
+        exampleSentenceWritingEl.addEventListener("click", () => toggleExampleSentence('writing'));
+
+        // Toggle motivation message listener
+        motivationContainerQuiz.addEventListener("click", () => {
+            const isEnglishHidden = motivationQuizEn.classList.contains("hidden");
+            if (isEnglishHidden) {
+                // Va a cambiar a inglés, reproduce el audio en inglés
                 playPronunciation(motivationQuizEn.textContent);
-                motivationQuizEn.classList.toggle("hidden");
-                motivationQuizEs.classList.toggle("hidden");
+            } else {
+                // Va a cambiar a español, reproduce el audio en español
+                playPronunciation(motivationQuizEs.textContent);
             }
+            motivationQuizEs.classList.toggle("hidden");
+            motivationQuizEn.classList.toggle("hidden");
         });
-        motivationContainerWriting.addEventListener('click', () => {
-            if (motivationWritingEn.textContent) {
+        
+        motivationContainerWriting.addEventListener("click", () => {
+            const isEnglishHidden = motivationWritingEn.classList.contains("hidden");
+            if (isEnglishHidden) {
+                // Va a cambiar a inglés, reproduce el audio en inglés
                 playPronunciation(motivationWritingEn.textContent);
-                motivationWritingEn.classList.toggle("hidden");
-                motivationWritingEs.classList.toggle("hidden");
-            }
-        });
-
-        // Eventos para el texto de ejemplo
-        exampleSentenceQuizEl.addEventListener('click', () => {
-            const currentVerb = shuffledVerbs[currentIndex];
-            if (quizExampleIsSpanish) {
-                exampleSentenceQuizEl.textContent = currentVerb.english_example;
-                playPronunciation(currentVerb.english_example);
             } else {
-                exampleSentenceQuizEl.textContent = currentVerb.example;
+                // Va a cambiar a español, reproduce el audio en español
+                playPronunciation(motivationWritingEs.textContent);
             }
-            quizExampleIsSpanish = !quizExampleIsSpanish;
+            motivationWritingEs.classList.toggle("hidden");
+            motivationWritingEn.classList.toggle("hidden");
         });
-
-        exampleSentenceWritingEl.addEventListener('click', () => {
+        
+        audioButtonQuiz.addEventListener("click", () => {
             const currentVerb = shuffledVerbs[currentIndex];
-            if (writingExampleIsSpanish) {
-                exampleSentenceWritingEl.textContent = currentVerb.english_example;
-                playPronunciation(currentVerb.english_example);
-            } else {
-                exampleSentenceWritingEl.textContent = currentVerb.example;
-            }
-            writingExampleIsSpanish = !writingExampleIsSpanish;
+            playPronunciation(currentVerb.english);
         });
 
-        // Start with the initial selection view
+        audioButtonWriting.addEventListener("click", () => {
+            const currentVerb = shuffledVerbs[currentIndex];
+            playPronunciation(currentVerb.english);
+        });
+        
+        // Listeners for new Gemini features
+        geminiNewExampleButtonQuiz.addEventListener("click", () => {
+            const currentVerb = shuffledVerbs[currentIndex];
+            if (currentVerb) {
+                generateNewExample(currentVerb.english, currentVerb.spanish);
+            }
+        });
+
+        geminiCheckButtonWriting.addEventListener("click", () => {
+            const currentVerb = shuffledVerbs[currentIndex];
+            const userAnswer = answerInput.value.trim();
+            if (currentVerb && userAnswer) {
+                checkUserSentence(currentVerb.english, userAnswer, currentVerb.spanish);
+            }
+        });
+
+
+        // Función para actualizar el estado de los botones de navegación
+        function updateNavButtons() {
+            backButton.disabled = currentIndex === 0;
+            nextButton.disabled = choiceMade && currentMode === 'quiz';
+        }
+
+        // Inicializar la aplicación en el modo de selección
         showSelectionMode();
     </script>
 </body>
